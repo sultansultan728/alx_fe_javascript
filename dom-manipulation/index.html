@@ -3,10 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Quote Generator with Filter</title>
+  <title>Dynamic Quote Generator with Server Sync</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background-color: #f9f9f9;
+    }
+    #notification {
+      background: #ffe9b3;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-left: 4px solid #ffcc00;
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <h1>Dynamic Quote Generator</h1>
+
+  <!-- Notification Area -->
+  <div id="notification"></div>
 
   <!-- Category Filter -->
   <label for="categoryFilter">Filter by Category:</label>
@@ -32,6 +49,12 @@
     <button id="exportQuotesButton">Export Quotes</button>
     <label for="importFile"> Import Quotes: </label>
     <input type="file" id="importFile" accept=".json" />
+  </div>
+
+  <!-- Sync Section -->
+  <div id="syncSection">
+    <h3>Server Sync</h3>
+    <button id="syncButton">Sync with Server</button>
   </div>
 
   <script src="script.js"></script>
