@@ -1,5 +1,5 @@
 // ---------------------------
-// Dynamic Quote Generator v4
+// Dynamic Quote Generator v4 (with POST sync)
 // ---------------------------
 
 // Load quotes from localStorage or defaults
@@ -126,7 +126,7 @@ function addQuote() {
   }
 
   const newQuote = {
-    id: Date.now(), // unique id
+    id: Date.now(),
     text,
     category
   };
@@ -180,13 +180,12 @@ function importFromJsonFile(event) {
 // SERVER SYNC LOGIC
 // --------------------
 
-// Simulated fetch from mock API
+// Fetch (GET) server quotes
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
     const serverData = await response.json();
 
-    // Convert posts to quote-like objects
     const serverQuotes = serverData.map(item => ({
       id: item.id,
       text: item.title,
@@ -199,26 +198,40 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// Conflict resolution (server wins)
+// Push (POST) local quotes to server
+async function pushLocalQuotesToServer() {
+  try {
+    for (const q of quotes) {
+      await fetch("https://jsonplaceholder.typicode.com/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(q)
+      });
+    }
+    showNotification("Local quotes synced to server (POST simulated).");
+  } catch (err) {
+    console.error("Error pushing quotes:", err);
+  }
+}
+
+// Conflict resolution
 function resolveConflicts(serverQuotes) {
   let conflictsResolved = 0;
 
   serverQuotes.forEach(serverQuote => {
     const localIndex = quotes.findIndex(q => q.id === serverQuote.id);
     if (localIndex === -1) {
-      // New quote from server
       quotes.push(serverQuote);
     } else {
-      // Conflict: Server version overwrites local
       quotes[localIndex] = serverQuote;
       conflictsResolved++;
     }
   });
 
   if (conflictsResolved > 0) {
-    showNotification(`${conflictsResolved} conflicts resolved. Server data took precedence.`);
+    showNotification(`${conflictsResolved} conflicts resolved — server data took precedence.`);
   } else {
-    showNotification("Quotes synced with server successfully!");
+    showNotification("Quotes synced successfully with server!");
   }
 
   saveQuotes();
@@ -226,9 +239,10 @@ function resolveConflicts(serverQuotes) {
   filterQuotes();
 }
 
-// Manual and automatic sync
-function syncWithServer() {
-  fetchQuotesFromServer();
+// Sync both directions
+async function syncWithServer() {
+  await pushLocalQuotesToServer();
+  await fetchQuotesFromServer();
 }
 
 // Auto-sync every 60 seconds
@@ -250,7 +264,6 @@ categoryFilter.addEventListener("change", filterQuotes);
 populateCategories();
 filterQuotes();
 
-// Restore last viewed quote
 const lastQuote = sessionStorage.getItem("lastQuote");
 if (lastQuote) {
   const quote = JSON.parse(lastQuote);
